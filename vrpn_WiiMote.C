@@ -30,7 +30,7 @@ class vrpn_Wiimote_Device {
 		struct wiimote_t *device;
 		unsigned  which;
 		unsigned  useMS;
-		unsigned  useIR;
+        unsigned  useIR;
 		bool reorderButtons;
 		bool      found;
 		bool      connected;
@@ -112,6 +112,22 @@ unsigned vrpn_WiiMote::map_button(unsigned btn) {
 }
 
 void vrpn_WiiMote::handle_event() {
+    /*
+     * Motion+ support
+     */
+    if (IS_JUST_PRESSED(wiimote->device, WIIMOTE_BUTTON_ONE))
+    {
+        if(WIIUSE_USING_EXP(wiimote->device))
+            wiiuse_set_motion_plus(wiimote->device, 2); // nunchuck pass-through
+        else
+            wiiuse_set_motion_plus(wiimote->device, 1); // standalone
+    }
+
+//    if (IS_JUST_PRESSED(wiimote->device, WIIMOTE_BUTTON_TWO))
+//    {
+//        wiiuse_set_motion_plus(wiimote->device, 0); // off
+//    }
+
 	//-------------------------------------------------------------------------
 	// Set the status of the buttons.  The first 16 buttons come from
 	// the main contoller.  If there is an expansion controller plugged in,
@@ -134,6 +150,12 @@ void vrpn_WiiMote::handle_event() {
 				buttons[16 + i] = (wiimote->device->exp.nunchuk.btns & (1 << i)) != 0;
 			}
 			break;
+
+        case EXP_MOTION_PLUS_NUNCHUK:
+            for (i = 0; i < 16; i++) {
+                buttons[16 + i] = (wiimote->device->exp.mp.nc->btns & (1 << i)) != 0;
+            }
+            break;
 
 		case EXP_CLASSIC:
 			for (i = 0; i < 16; i++) {
@@ -195,6 +217,23 @@ void vrpn_WiiMote::handle_event() {
 			channel[16 + 4] = wiimote->device->exp.nunchuk.js.mag;
 			break;
 
+		case EXP_MOTION_PLUS_NUNCHUK:
+            channel[16 + 0] = wiimote->device->exp.mp.nc->gforce.x;
+            channel[16 + 1] = wiimote->device->exp.mp.nc->gforce.y;
+            channel[16 + 2] = wiimote->device->exp.mp.nc->gforce.z;
+            channel[16 + 3] = wiimote->device->exp.mp.nc->js.ang;
+            channel[16 + 4] = wiimote->device->exp.mp.nc->js.mag;
+        case EXP_MOTION_PLUS_CLASSIC:
+        case EXP_MOTION_PLUS:
+            channel[21 + 0] = wiimote->device->exp.mp.angle_rate_gyro.pitch;
+            channel[21 + 1] = wiimote->device->exp.mp.angle_rate_gyro.roll;
+            channel[21 + 2] = wiimote->device->exp.mp.angle_rate_gyro.yaw;
+            channel[21 + 3] = wiimote->device->exp.mp.orient.pitch;
+            channel[21 + 4] = wiimote->device->exp.mp.orient.roll;
+            channel[21 + 5] = wiimote->device->exp.mp.orient.yaw;
+            printf("%f %f %f\n",channel[21 + 3],channel[21 + 4],channel[21 + 5]);
+		    break;
+
 		case EXP_CLASSIC:
 			channel[32 + 0] = wiimote->device->exp.classic.l_shoulder;
 			channel[32 + 1] = wiimote->device->exp.classic.r_shoulder;
@@ -239,6 +278,13 @@ void vrpn_WiiMote::handle_event() {
 
 	//-------------------------------------------------------------------------
 	// Read the state of the Infrared sensors.
+
+	//-------------------------------------------------------------------------
+	// Pre-computed values coming from Wiiuse
+
+	channel[96 + 0] = wiimote->device->orient.pitch;
+	channel[96 + 1] = wiimote->device->orient.roll;
+	channel[96 + 2] = wiimote->device->orient.yaw;
 }
 
 void vrpn_WiiMote::connect_wiimote(int timeout) {
@@ -354,7 +400,7 @@ vrpn_WiiMote::vrpn_WiiMote(const char *name, vrpn_Connection *c, unsigned which,
 	wiimote(new vrpn_Wiimote_Device) {
 	int i;
 
-	vrpn_Analog::num_channel = min(96, vrpn_CHANNEL_MAX);
+	vrpn_Analog::num_channel = min(128, vrpn_CHANNEL_MAX);
 	for (i = 0; i < vrpn_Analog::num_channel; i++) {
 		channel[i] = 0;
 	}
@@ -532,6 +578,10 @@ void vrpn_WiiMote::mainloop() {
 				// for the info.
 				break;
 
+			case WIIUSE_MOTION_PLUS_ACTIVATED:
+                send_text_message("Motion Plus activated", _timestamp);
+                break;
+
 			case WIIUSE_NUNCHUK_INSERTED:
 				send_text_message("Nunchuck inserted", _timestamp);
 				break;
@@ -553,9 +603,11 @@ void vrpn_WiiMote::mainloop() {
 			case WIIUSE_NUNCHUK_REMOVED:
 			case WIIUSE_CLASSIC_CTRL_REMOVED:
 			case WIIUSE_GUITAR_HERO_3_CTRL_REMOVED:
+            case WIIUSE_MOTION_PLUS_REMOVED:
 				send_text_message("An expansion controller was removed", _timestamp,
 				                  vrpn_TEXT_WARNING);
 				break;
+
 #ifdef EXP_WII_BOARD
 			case WIIUSE_WII_BOARD_CTRL_REMOVED:
 				send_text_message("Wii Balance Board controller removed/disconnected", _timestamp,
