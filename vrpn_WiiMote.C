@@ -18,6 +18,7 @@
 // Opaque class to hold WiiMote device information so we don't have
 // to include wiimote.h in the vrpn_WiiMote.h file.
 class vrpn_Wiimote_Device {
+<<<<<<< HEAD
 public:
     vrpn_Wiimote_Device() :
         device(NULL),
@@ -35,6 +36,25 @@ public:
     bool      found;
     bool      connected;
     std::string bdaddr;
+=======
+	public:
+		vrpn_Wiimote_Device() :
+			device(NULL),
+			which(0),
+			useMS(0),
+			useIR(0),
+			reorderButtons(false),
+			found(false),
+			connected(false) {}
+		struct wiimote_t *device;
+		unsigned  which;
+		unsigned  useMS;
+        unsigned  useIR;
+		bool reorderButtons;
+		bool      found;
+		bool      connected;
+		std::string bdaddr;
+>>>>>>> 4dff23986a920a69feddf91bdb84fffd616f1895
 };
 
 // Helper routines.
@@ -168,6 +188,7 @@ void vrpn_WiiMote::handle_event() {
             buttons[48 + i] = (wiimote->device->exp.gh3.btns & (1 << i)) != 0;
         }
         break;
+
 #ifdef EXP_WII_BOARD
     case EXP_WII_BOARD:
         // The balance board pretends to be its own wiimote, with only an "a" button
