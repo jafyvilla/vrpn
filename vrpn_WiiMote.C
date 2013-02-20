@@ -18,7 +18,6 @@
 // Opaque class to hold WiiMote device information so we don't have
 // to include wiimote.h in the vrpn_WiiMote.h file.
 class vrpn_Wiimote_Device {
-<<<<<<< HEAD
 public:
     vrpn_Wiimote_Device() :
         device(NULL),
@@ -36,25 +35,6 @@ public:
     bool      found;
     bool      connected;
     std::string bdaddr;
-=======
-	public:
-		vrpn_Wiimote_Device() :
-			device(NULL),
-			which(0),
-			useMS(0),
-			useIR(0),
-			reorderButtons(false),
-			found(false),
-			connected(false) {}
-		struct wiimote_t *device;
-		unsigned  which;
-		unsigned  useMS;
-        unsigned  useIR;
-		bool reorderButtons;
-		bool      found;
-		bool      connected;
-		std::string bdaddr;
->>>>>>> 4dff23986a920a69feddf91bdb84fffd616f1895
 };
 
 // Helper routines.
