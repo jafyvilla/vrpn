@@ -279,9 +279,14 @@ void vrpn_WiiMote::handle_event() {
     //-------------------------------------------------------------------------
     // Pre-computed values coming from Wiiuse
 
+
     channel[96 + 0] = wiimote->device->orient.pitch;
     channel[96 + 1] = wiimote->device->orient.roll;
     channel[96 + 2] = wiimote->device->orient.yaw;
+
+    // Absolute IR value based on the dots data
+    channel[96 + 3] = wiimote->device->ir.x;
+    channel[96 + 4] = wiimote->device->ir.y;
 }
 
 void vrpn_WiiMote::connect_wiimote(int timeout) {
